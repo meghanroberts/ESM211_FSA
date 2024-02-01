@@ -1,0 +1,74 @@
+---
+title: "Weight_Length_example"
+output: html_document
+date: "2024-01-30"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(FSA) 
+library(FSAdata) 
+```
+
+#load in the data, which comes from the FSAdata package above
+```{r}
+data(InchLake2)
+```
+
+#clean data for example   
+```{r}
+#let's look at the Bluegill data, which was a catch and release sample from Wisconsin. 
+
+#this data has fish length in inches and weight in grams. recall for relative weights you need to be fully in  english or metric units. 
+
+#convert lengths to mm in a new column called length_mm
+InchLake2$length_mm <- round(InchLake2$length*25.4,0) 
+
+#look specifically at Bluegill fish, and from the year 2007 
+bluegill_2007 <- InchLake2 %>% 
+  filter(species == "Bluegill", year == "2007") 
+```
+
+#compute relative weight using wrAdd(), 
+```{r}
+# you can manually compute relative weight (see the vignette for that), but FSA gives you a tool to do that more easily: 
+
+#wrAdd() calculates the relative weight for each fish based on the standard weight equation for that species 
+bluegill_2007_weights <- wrAdd(weight~length_mm+species, data=bluegill_2007) #calculates relative weight 
+
+#add to the dataframe 
+bluegill_2007 <- bluegill_2007 %>% 
+  mutate(relative_weight = bluegill_2007_weights)
+```
+
+#interpret what the relative weights mean 
+```{r}
+wr_2007 <- mean(bluegill_2007$relative_weight, na.rm = TRUE)
+wr_2007
+```
+
+#find the average relative weight by size class 
+```{r}
+#for bluegill research groups them into the following classes: 
+## <8 cm 
+## <15 cm
+## <20 cm
+## <25 cm 
+## <30 cm 
+#approximate length at maturity for bluegill is 15cm, so the first two size classes are juveniles 
+
+#categorize each fish into its size class 
+bluegill_2007 <- bluegill_2007 %>% 
+  mutate(class = ifelse(length_mm < 80, "young_of_year", ifelse(length_mm < 150, "juvenile", ifelse(length_mm < 200, "adult_1", ifelse(length_mm < 250, "adult_2", "adult_3")))))
+
+#the relative weight function doesn't work for fish in the young of year class for this species (they're too short), so we can compare juveniles to different classes of adults 
+
+bluegill_2007_summary <- bluegill_2007 %>% 
+  group_by(class) %>%
+  summarize(mean_relative_weight = mean(relative_weight, na.rm = TRUE))
+
+bluegill_2007_summary
+```
+
