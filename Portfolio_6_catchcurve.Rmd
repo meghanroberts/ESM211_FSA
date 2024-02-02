@@ -1,0 +1,83 @@
+
+## First load in the required packages data
+```{r}
+#the main package
+library(FSA)
+#this package contains data compatible with this package
+library(FSAdata)
+#for data manipulation
+library(tidyverse)
+library(stringr)
+```
+
+## Then let's grab the data and process it!
+## We need a dataframe that contains age and catch (both are numerics)
+```{r}
+#can use this function from FSAdata to find data that is compatible with the function
+help.search("Catch curve", package=c("FSAdata","FSA"))
+
+#we are going to use data of estimated catch-at-age for Gulf Menhaden from 1964-2004
+data<-FSAdata::Menhaden1 %>% 
+  #pivot the data to get it in the required format
+  pivot_longer(cols = age0:age6, names_to = "age", values_to = "ct") %>% 
+  #then use group by and summarize to get one total catch value by age class
+  group_by(age) %>% summarise(catch=sum(ct))
+
+#use string manipulations to remove the leading age_ from the values in the age column
+data$age<-str_replace_all(data$age, "age", "")
+
+#convert columns to numerics
+data$age<-as.numeric(data$age)
+
+#take the log of catch
+data$logct <- log(data$catch)
+
+#examine the structure of the dataframe
+str(data)
+```
+
+## Plot the catch curve for this data to assess which ages fall on the descending limb of the catch curve.
+```{r}
+plot(logct~age,data=data,ylab="log(Catch)",pch=19)
+```
+
+## Non-weighted regression
+## Now, you can use this information in the catchCurve function
+```{r}
+#we will use years 1-6
+results <- FSA::catchCurve(catch~age,data=data,ages2use=1:6)
+
+#show the estimated values of Z and A (and std. deviation)
+#Z is the instantaneous mortality rate (think slope of line)
+#A is the annual mortality rate
+summary(results)
+
+#show the confidence intervals associated with these values
+confint(results)
+
+#plot the points with the results for Z and A
+plot(results)
+
+```
+
+## Weighted Regression
+## The use of catchCurve in the previous chunk assigned equal weight to fish of all ages, but Maceina and Bettoli (1998) suggested that a weighted regression should be used with the catch-curve method in order to reduce the relative impact of older ages with fewer fish. The use of use.weights=TRUE satisfies this.
+```{r}
+
+weighted_results <- FSA::catchCurve(catch~age,data=data,
+                                    ages2use=2:6,use.weights=TRUE)
+
+summary(weighted_results)
+
+confint(weighted_results)
+
+plot(weighted_results)
+```
+
+## Portfolio Question
+How do the estimates of Z and A change between between the weighted and non-weighted regressions? How does the confidence interval change?
+
+
+
+
+
