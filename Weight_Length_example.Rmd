@@ -9,7 +9,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(FSA) 
-library(FSAdata) 
+library(FSAdata) #provides data for use with the FSA package! 
 ```
 
 #load in the data, which comes from the FSAdata package above
@@ -19,14 +19,14 @@ data(InchLake2)
 
 #clean data for example   
 ```{r}
-#let's look at the Bluegill data, which was a catch and release sample from Wisconsin. 
+#let's look at the Bluegill data, which was a catch and release sample from a lake in Wisconsin. 
 
 #this data has fish length in inches and weight in grams. recall for relative weights you need to be fully in  english or metric units. 
 
 #convert lengths to mm in a new column called length_mm
 InchLake2$length_mm <- round(InchLake2$length*25.4,0) 
 
-#look specifically at Bluegill fish, and from the year 2007 
+#look specifically at Bluegill fish, and from the year 2007, to get a snapshot of how the population was doing at that particular time
 bluegill_2007 <- InchLake2 %>% 
   filter(species == "Bluegill", year == "2007") 
 ```
@@ -47,6 +47,9 @@ bluegill_2007 <- bluegill_2007 %>%
 ```{r}
 wr_2007 <- mean(bluegill_2007$relative_weight, na.rm = TRUE)
 wr_2007
+
+#relative weight below 100 indicates the fish/population is skinnier than expected for that species, indicating a potentially unhealthy population and environmental conditions that aren't favorable 
+#relative weight above 100 indicates the fish/population is fatter than expected for that species, indicating a healthy population and favorable environmental conditions 
 ```
 
 #find the average relative weight by size class 
