@@ -1,0 +1,83 @@
+---
+title: "Portfolio 6"
+author: "Kat Aristi"
+date: "2024-02-04"
+output: html_document
+---
+
+# Welcome to the FSA function depletion()!!!!
+## This function can be used to estimate the initial population size (N0) for a closed population (aka no immigration, emmigration, mortatlity, or recruitment).
+## There are three methods for estimating N0: the Leslie Method, DeLury Method, and K-Pass Method
+## Before we get into that, lets load in the required packages
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#the main package
+install.packages("FSA")
+library(FSA)
+
+#the data compatible with this package
+install.packages("FSAdata")
+library(FSAdata)
+
+#other necessary packages
+library(tidyverse)
+library(janitor)
+```
+
+## Now load in the depletion data!
+### If you go to the help window and click on the depletion package, you will also find details about the Leslie and DeLury methods.
+```{r}
+help.search("depletion", package=c("FSAdata","FSA"))
+
+#we are going to use the catch and effort snapper data 
+#there are 3 different species within this data set, all with the same effort. We are going to focus on Pristipomoides zonatus species. 
+#effort = fishing effort (line-hours of a bottom hand-line)
+
+snapper <- FSAdata::Pathfinder
+snapper_pzonatus <-snapper %>% clean_names() 
+```
+
+## Now to start with the Leslie Method!
+```{r}
+#grab the data use the depletion() to calculate N0 and q
+leslie <- with(snapper_pzonatus, depletion(pzonatus,effort,method="Leslie",Ricker.mod = TRUE)) #the ricker.mod is a modification that is used within the equation
+summary(leslie) 
+#remember that N0 = initial population size and q = catchability coefficient or the fraction of the population that is removed by one unit of fishing effort
+
+#find the confidence intervals of this data
+confint(leslie)
+
+#plot it
+plot(leslie)
+```
+### The initial population size of the Pristipomoides zonatus is 1066. 
+
+## Now for the DeLury Method!
+```{r}
+#we will use the same set of data and species for this method in order to compare/contrast them
+delury <- with(snapper_pzonatus, depletion(pzonatus, effort, method="Delury", Ricker.mod = TRUE))
+summary(delury)
+
+confint(delury)
+
+plot(delury)
+```
+### The DeLury Method finds that the inital population size of Pristipomoides zonatus is 1077, so 11 more than the Leslie Method as well as a slight decrease in q!
+
+## Now for the K-Pass Method
+```{r}
+#again, we are going to use the snapper Pristipomoides zonatus data, but this time we only need catch data
+#for this method, we will still get N0 but will also get p which is probability of capture
+
+k_pass <- with(snapper_pzonatus, removal(pzonatus)) 
+summary(k_pass)
+
+confint(k_pass)
+```
+### The K-Pass Method determined that N0 is 985, but does have an upper bound of 1077. p=0.1
+
+Portfolio Assignment: Grab a new set of data and use the Leslie, DeLury, and K-Pass methods to calculate the initial population size! Answer the following questions:
+
+1. Compare and contrast the initial population sizes between the three methods
+2. Why are the Leslie and DeLury methods not valid at estimating N0? 
+3. What values can you look at to determine the reliability of the data? (Hint: Think back to what we learned about statistics in 206)
